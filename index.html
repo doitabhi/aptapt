@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APT APT Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        .setup-section {
+            margin: 20px auto;
+            max-width: 600px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #333;
+        }
+        .game-board {
+            margin: 20px auto;
+            width: 150px;
+        }
+        .cube-stack {
+            min-height: 300px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .cube {
+            height: 30px;
+            margin: 2px;
+            border-radius: 5px;
+        }
+        button, select {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #1a1a1a;
+            cursor: not-allowed;
+        }
+        #message {
+            margin: 20px;
+            font-size: 20px;
+            color: #4CAF50;
+        }
+        .player-colors {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .color-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>APT APT</h1>
+    
+    <div class="setup-section" id="setup">
+        <h2>Game Setup</h2>
+        <div>
+            <label for="playerCount">Number of Players (2-4):</label>
+            <select id="playerCount">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4">4 Players</option>
+            </select>
+        </div>
+        <div>
+            <label for="numberChoice">Select stack height (6-20):</label>
+            <select id="numberChoice">
+                <script>
+                    for(let i = 6; i <= 20; i++) {
+                        document.write(`<option value="${i}">${i}</option>`);
+                    }
+                </script>
+            </select>
+        </div>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="gameArea" style="display: none;">
+        <div class="player-colors" id="playerColors"></div>
+        <div class="game-board">
+            <div class="cube-stack" id="stack1"></div>
+        </div>
+        <button onclick="placeCube()" id="placeButton">Place Cube</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
+        let players = 2;
+        let currentPlayer = 0;
+        let gameState = [];
+        let usedColors = new Set();
+        let maxHeight;
+        
+        function startGame() {
+            players = parseInt(document.getElementById('playerCount').value);
+            maxHeight = parseInt(document.getElementById('numberChoice').value);
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'block';
+            gameState = [[]];
+            currentPlayer = Math.floor(Math.random() * players);
+            setupPlayerColors();
+            updateMessage();
+        }
+
+        function setupPlayerColors() {
+            const playerColorsDiv = document.getElementById('playerColors');
+            playerColorsDiv.innerHTML = '';
+            for(let i = 0; i < players; i++) {
+                const colorIndicator = document.createElement('div');
+                colorIndicator.className = 'color-indicator';
+                colorIndicator.innerHTML = `
+                    <div class="color-box" style="background-color: ${colors[i]}"></div>
+                    <span>Player ${i + 1}</span>
+                `;
+                playerColorsDiv.appendChild(colorIndicator);
+            }
+        }
+
+        function placeCube() {
+            const stack = gameState[0];
+            
+            if (stack.length < maxHeight) {
+                let color = getNextColor();
+                stack.unshift(color); // Changed from push to unshift to add at beginning
+                updateBoard();
+                
+                if (isGameOver()) {
+                    endGame();
+                } else {
+                    currentPlayer = (currentPlayer + 1) % players;
+                    updateMessage();
+                }
+            }
+        }
+
+        function getNextColor() {
+            if (usedColors.size === players) {
+                usedColors.clear();
+            }
+            
+            let availableColors = colors.slice(0, players).filter(c => !usedColors.has(c));
+            let color = availableColors[Math.floor(Math.random() * availableColors.length)];
+            usedColors.add(color);
+            return color;
+        }
+
+        function updateBoard() {
+            const stack = document.getElementById('stack1');
+            stack.innerHTML = '';
+            gameState[0].forEach(color => {
+                const cube = document.createElement('div');
+                cube.className = 'cube';
+                cube.style.backgroundColor = color;
+                stack.appendChild(cube);
+            });
+        }
+
+        function isGameOver() {
+            return gameState[0].length === maxHeight;
+        }
+
+        function endGame() {
+            const winningColor = gameState[0][0]; // Changed to get first element instead of last
+            const winningPlayer = colors.indexOf(winningColor) + 1;
+            document.getElementById('message').textContent = `Player ${winningPlayer} wins!`;
+            document.getElementById('placeButton').disabled = true;
+        }
+
+        function updateMessage() {
+            document.getElementById('message').textContent = `Player ${currentPlayer + 1}'s turn`;
+        }
+    </script>
+</body>
+</html>
